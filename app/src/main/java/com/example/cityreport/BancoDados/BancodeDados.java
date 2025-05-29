@@ -4,15 +4,17 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.view.View;
+import android.util.Log;
 
 public class BancodeDados extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CityReport.db";
-    final static int DATABASE_VERSION = 1;
+    final static int DATABASE_VERSION = 2;
 
     public static String USUARIOS = "usuarios";
     public static String PROBLEMAS = "problemas";
-    public static String CATEGORIAS = "categorias";
+    public static final String CATEGORIAS = "categorias";
+
+    private static final String TAG = "BancodeDados";
 
     public BancodeDados(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -23,8 +25,6 @@ public class BancodeDados extends SQLiteOpenHelper {
         criarTabelaUsuarios(db);
         criarTabelaCategorias(db);
         criarTabelaProblemas(db);
-
-
     }
 
     private void criarTabelaUsuarios(SQLiteDatabase db) {
@@ -42,21 +42,17 @@ public class BancodeDados extends SQLiteOpenHelper {
                 "nome TEXT NOT NULL, " +
                 "descricao TEXT)";
         db.execSQL(CriarTabelaCategorias);
-        inserirCategoriasPadrao(db);
+        inserirCategoria(db, "Iluminação Pública", "Problemas relacionados à iluminação das ruas.");
+        inserirCategoria(db, "Buracos e Pavimentação", "Problemas de buracos e condições das vias.");
+        inserirCategoria(db, "Limpeza Urbana", "Questões de lixo e limpeza nas áreas públicas.");
+        inserirCategoria(db, "Áreas Verdes", "Problemas em parques e jardins públicos.");
+        inserirCategoria(db, "Sinalização", "Falta ou danos em placas de trânsito e sinalização.");
     }
-
-    private void inserirCategoriasPadrao(SQLiteDatabase db) {
-        insertCategoria(db, "Iluminação Pública", "Problemas relacionados à iluminação das ruas.");
-        insertCategoria(db, "Buracos e Pavimentação", "Problemas de buracos e condições das vias.");
-        insertCategoria(db, "Limpeza Urbana", "Questões de lixo e limpeza nas áreas públicas.");
-        insertCategoria(db, "Áreas Verdes", "Problemas em parques e jardins públicos.");
-        insertCategoria(db, "Sinalização", "Falta ou danos em placas de trânsito e sinalização.");
-
-    }
-
-    private void insertCategoria(SQLiteDatabase db, String nome, String descricao) {
-        String insertSql = "INSERT INTO " + CATEGORIAS + " (nome, descricao) VALUES (?, ?)";
-        db.execSQL(insertSql, new Object[]{nome, descricao});
+    private void inserirCategoria(SQLiteDatabase db, String nome, String descricao) {
+        ContentValues values = new ContentValues();
+        values.put("nome", nome);
+        values.put("descricao", descricao);
+        db.insert("categorias", null, values);
     }
 
     private void criarTabelaProblemas(SQLiteDatabase db) {
@@ -73,22 +69,15 @@ public class BancodeDados extends SQLiteOpenHelper {
                 "FOREIGN KEY (categoria_id) REFERENCES " + CATEGORIAS + "(id), " +
                 "FOREIGN KEY (usuario_id) REFERENCES " + USUARIOS + "(id))";
         db.execSQL(CriarTabelaProblemas);
+        Log.d(TAG, "Tabela problemas criada");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
+        // Aqui você pode implementar lógica para migrar versões do banco
+        Log.d(TAG, "Upgrade do banco de dados de versão " + oldVersion + " para " + newVersion);
     }
-
-    public void inserirCategoria() {
-        try (SQLiteDatabase db = this.getWritableDatabase()) {
-            ContentValues values = new ContentValues();
-            values.put("nome", "Infraestrutura");
-            values.put("descricao", "Problemas com infraestrutura");
-            db.insert("categorias", null, values);
-        }
-    }
-
 
 
 }
+

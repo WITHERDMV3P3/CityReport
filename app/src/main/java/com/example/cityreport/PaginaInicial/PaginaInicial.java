@@ -26,6 +26,7 @@ public class PaginaInicial extends AppCompatActivity {
 
         btnCadastrarProblema.setOnClickListener(v -> {
             Intent intent = new Intent(PaginaInicial.this, PaginaCadastro.class);
+
             startActivity(intent);
             finish();
         });
