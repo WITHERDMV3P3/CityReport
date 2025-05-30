@@ -2,7 +2,9 @@ package com.example.cityreport.PaginaReporte;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -11,6 +13,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -31,6 +34,10 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -44,11 +51,12 @@ public class PaginaCadastro extends AppCompatActivity implements OnMapReadyCallb
     private static final int REQUEST_PICK_IMAGE = 2;
     private static final int REQUEST_PERMISSIONS = 100;
     private static final int REQUEST_LOCATION_PERMISSION = 200;
-
     private ImageView imgPerfil;
     private Button btnReportar, btnVoltar;
     private String currentPhotoPath;
     private Uri photoURI;
+
+    private TextInputEditText descricaoText;
 
     private GoogleMap mMap;
     private FusedLocationProviderClient fusedLocationClient;
@@ -63,6 +71,9 @@ public class PaginaCadastro extends AppCompatActivity implements OnMapReadyCallb
         btnVoltar = findViewById(R.id.btnvoltar);
         imgPerfil = findViewById(R.id.imgPerfil);
         spinnerCategorias = findViewById(R.id.spinnerCategorias);
+        btnReportar = findViewById(R.id.btnreportar);
+        descricaoText = findViewById(R.id.descricao);
+
 
 
         bancodadosDAO = new BancodadosDAO(this);
@@ -88,7 +99,79 @@ public class PaginaCadastro extends AppCompatActivity implements OnMapReadyCallb
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
+
+        btnReportar.setOnClickListener(v -> {
+            reportarProblema();
+        });
     }
+
+    private void reportarProblema() {
+        SharedPreferences sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        int usuarioId = sharedPreferences.getInt("usuario_id", -1); // -1 se não encontrado
+
+
+        String descricao = descricaoText.getText() != null ? descricaoText.getText().toString().trim() : "";
+        String categoriaSelecionada = (String) spinnerCategorias.getSelectedItem();
+
+        if (photoURI == null) {
+            Toast.makeText(this, "Selecione ou tire uma foto.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        byte[] imagemBytes = convertImageToByteArray(photoURI);
+        if (imagemBytes == null) {
+            Toast.makeText(this, "Erro ao processar a imagem.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Pega categoria_id a partir do nome
+        int categoriaId = bancodadosDAO.buscarcategoriaID(categoriaSelecionada);
+
+        // Pega localização atual
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    if (location != null) {
+                        double latitude = location.getLatitude();
+                        double longitude = location.getLongitude();
+                        String dataHoraAtual = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+
+                        String status = "Pendente";
+
+                        // Insere no banco
+                        bancodadosDAO.inserirProblema(categoriaId, usuarioId, descricao, imagemBytes, latitude, longitude, dataHoraAtual, status);
+                        Toast.makeText(this, "Problema reportado com sucesso!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "Não foi possível obter localização.", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Erro ao obter localização: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+
+
+    private byte[] convertImageToByteArray(Uri imageUri) {
+        try {
+            Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+            return stream.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private Location getCurrentLocationFromMap() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        }
+        return fusedLocationClient.getLastLocation().getResult();
+    }
+
 
     private void loadCategories() {
         List<String> categories = bancodadosDAO.carregarCategorias();
@@ -149,16 +232,12 @@ public class PaginaCadastro extends AppCompatActivity implements OnMapReadyCallb
     private void showImagePickerOptions() {
         androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
         builder.setTitle("Escolher imagem");
-        builder.setItems(new CharSequence[]{"Tirar Foto", "Escolher da Galeria", "Cancelar"}, (dialog, which) -> {
+        builder.setItems(new CharSequence[]{"Tirar Foto", "Cancelar"}, (dialog, which) -> {
             switch (which) {
                 case 0:
                     dispatchTakePictureIntent();
                     break;
                 case 1:
-                    Intent pickPhoto = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    startActivityForResult(pickPhoto, REQUEST_PICK_IMAGE);
-                    break;
-                case 2:
                     dialog.dismiss();
                     break;
             }

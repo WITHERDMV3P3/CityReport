@@ -73,4 +73,16 @@ public class BancodadosDAO {
         cursor.close();
         return categoryId;
     }
+
+    public int obterIdUsuario(String email, String senha) {
+        SQLiteDatabase db = new BancodeDados(context).getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT id FROM usuarios WHERE email = ? AND senha = ?", new String[]{email, senha});
+        if (cursor.moveToFirst()) {
+            int id = cursor.getInt(0);
+            cursor.close();
+            return id;
+        }
+        cursor.close();
+        return -1;
+    }
 }
