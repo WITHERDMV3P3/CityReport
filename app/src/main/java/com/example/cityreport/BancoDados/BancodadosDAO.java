@@ -33,6 +33,40 @@ public class BancodadosDAO {
         return loginValido;
     }
 
+    public List<String> buscarProblemas(int usuarioId) {
+        List<String> problemas = new ArrayList<>();
+        SQLiteDatabase db = new BancodeDados(context).getReadableDatabase();
+
+        String query = "SELECT c.nome, p.descricao, p.data_hora, p.status " +
+                "FROM problemas p " +
+                "JOIN categorias c ON p.categoria_id = c.id " +
+                "WHERE p.usuario_id = ? " +
+                "ORDER BY p.data_hora DESC";
+
+        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(usuarioId)});
+
+        if (cursor.moveToFirst()) {
+            do {
+                String categoria = cursor.getString(0);
+                String descricao = cursor.getString(1);
+                String dataHora = cursor.getString(2);
+                String status = cursor.getString(3);
+
+                // Formata os dados em uma string única
+                String problemaFormatado = String.format(
+                        "Categoria: %s\nDescrição: %s\nData: %s\nStatus: %s",
+                        categoria, descricao, dataHora, status
+                );
+
+                problemas.add(problemaFormatado);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        return problemas;
+    }
+
     public List<String> carregarCategorias() {
         List<String> categorias = new ArrayList<>();
         try(SQLiteDatabase db = new BancodeDados(context).getReadableDatabase()) {
@@ -86,3 +120,4 @@ public class BancodadosDAO {
         return -1;
     }
 }
+

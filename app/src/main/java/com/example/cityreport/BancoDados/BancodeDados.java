@@ -6,6 +6,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class BancodeDados extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CityReportBD.db";
     final static int DATABASE_VERSION = 1;
@@ -69,7 +72,6 @@ public class BancodeDados extends SQLiteOpenHelper {
                 "FOREIGN KEY (usuario_id) REFERENCES " + USUARIOS + "(id))";
         db.execSQL(CriarTabelaProblemas);
     }
-
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 

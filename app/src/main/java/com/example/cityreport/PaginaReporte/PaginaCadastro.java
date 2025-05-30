@@ -107,7 +107,7 @@ public class PaginaCadastro extends AppCompatActivity implements OnMapReadyCallb
 
     private void reportarProblema() {
         SharedPreferences sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
-        int usuarioId = sharedPreferences.getInt("usuario_id", -1); // -1 se não encontrado
+        int usuarioId = sharedPreferences.getInt("usuario_id", -1);
 
 
         String descricao = descricaoText.getText() != null ? descricaoText.getText().toString().trim() : "";
@@ -124,10 +124,8 @@ public class PaginaCadastro extends AppCompatActivity implements OnMapReadyCallb
             return;
         }
 
-        // Pega categoria_id a partir do nome
         int categoriaId = bancodadosDAO.buscarcategoriaID(categoriaSelecionada);
 
-        // Pega localização atual
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }

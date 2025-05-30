@@ -19,9 +19,12 @@
         android:textSize="24sp"
         android:textStyle="bold" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:layout_width="match_parent"
-        android:layout_height="560dp" />
+    <ListView
+        android:id="@+id/listViewProblemas"
+        android:layout_width="wrap_content"
+        android:layout_height="573dp"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp" />
 
     <Button
         android:id="@+id/btnCadastrarProblema"
