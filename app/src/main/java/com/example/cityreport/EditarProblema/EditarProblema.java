@@ -79,11 +79,8 @@ public class EditarProblema extends AppCompatActivity implements OnMapReadyCallb
             finish();
             return;
         }
-
-        // Configura os dados do problema na tela
         carregarDadosProblema();
 
-        // Configura o mapa
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.mMap);
         if (mapFragment != null) {
@@ -171,20 +168,17 @@ public class EditarProblema extends AppCompatActivity implements OnMapReadyCallb
     private void carregarDadosProblema() {
         etDescricao.setText(problema.getDescricao());
 
-        // Carrega categorias no spinner
         List<String> categorias = bancodadosDAO.carregarCategorias();
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_item, categorias);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerCategorias.setAdapter(adapter);
 
-        // Seleciona a categoria atual
         int posicaoCategoria = categorias.indexOf(problema.getCategoria());
         if (posicaoCategoria >= 0) {
             spinnerCategorias.setSelection(posicaoCategoria);
         }
 
-        // Carrega a foto (se existir) em uma thread separada
         new Thread(() -> {
             byte[] foto = bancodadosDAO.buscarFotoProblema(problema.getId());
             if (foto != null) {
@@ -198,11 +192,10 @@ public class EditarProblema extends AppCompatActivity implements OnMapReadyCallb
         try {
             Bitmap original = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
 
-            // Redimensionar imagem para largura máx de 1024px (mantendo proporção)
             Bitmap scaled = Bitmap.createScaledBitmap(original, 1024, (original.getHeight() * 1024) / original.getWidth(), true);
 
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            scaled.compress(Bitmap.CompressFormat.JPEG, 80, stream); // qualidade 80%
+            scaled.compress(Bitmap.CompressFormat.JPEG, 80, stream);
             return stream.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
@@ -252,7 +245,6 @@ public class EditarProblema extends AppCompatActivity implements OnMapReadyCallb
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Adiciona marcador na localização do problema
         LatLng localizacao = new LatLng(problema.getLatitude(), problema.getLongitude());
         mMap.addMarker(new MarkerOptions().position(localizacao).title("Local do problema"));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(localizacao, 15));
@@ -265,11 +257,9 @@ public class EditarProblema extends AppCompatActivity implements OnMapReadyCallb
             if (photoURI != null) {
                 try {
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), photoURI);
-
-                    // Redimensionar para manter qualidade sem exagerar
                     Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, 1024, (bitmap.getHeight() * 1024) / bitmap.getWidth(), true);
 
-                    imgProblema.setImageBitmap(scaledBitmap); // Atualiza a imagem na tela
+                    imgProblema.setImageBitmap(scaledBitmap);
                 } catch (IOException e) {
                     Toast.makeText(this, "Erro ao carregar imagem", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();

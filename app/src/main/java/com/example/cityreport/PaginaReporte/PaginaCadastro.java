@@ -1,6 +1,7 @@
 package com.example.cityreport.PaginaReporte;
 
 import android.Manifest;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -21,6 +22,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import com.example.cityreport.BancoDados.BancodadosDAO;
@@ -134,13 +137,15 @@ public class PaginaCadastro extends AppCompatActivity implements OnMapReadyCallb
                     if (location != null) {
                         double latitude = location.getLatitude();
                         double longitude = location.getLongitude();
-                        String dataHoraAtual = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+                        String dataHoraAtual = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date());
 
-                        String status = "Pendente";
+                        String status = "Reportado";
 
-                        // Insere no banco
                         bancodadosDAO.inserirProblema(categoriaId, usuarioId, descricao, imagemBytes, latitude, longitude, dataHoraAtual, status);
                         Toast.makeText(this, "Problema reportado com sucesso!", Toast.LENGTH_SHORT).show();
+
+                        notificarNovoProblema(categoriaSelecionada, descricao);
+
                         finish();
                         Intent intent = new Intent(PaginaCadastro.this, PaginaInicial.class);
                         startActivity(intent);
@@ -159,11 +164,10 @@ public class PaginaCadastro extends AppCompatActivity implements OnMapReadyCallb
         try {
             Bitmap original = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
 
-            // Redimensionar imagem para largura máx de 1024px (mantendo proporção)
             Bitmap scaled = Bitmap.createScaledBitmap(original, 1024, (original.getHeight() * 1024) / original.getWidth(), true);
 
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            scaled.compress(Bitmap.CompressFormat.JPEG, 80, stream); // qualidade 80%
+            scaled.compress(Bitmap.CompressFormat.JPEG, 80, stream);
             return stream.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
@@ -332,4 +336,27 @@ public class PaginaCadastro extends AppCompatActivity implements OnMapReadyCallb
                     Toast.makeText(this, "Erro ao obter localização: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
     }
+
+    private void notificarNovoProblema(String titulo, String descricao) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "city_report")
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle("Problema reportado com sucesso!")
+                .setContentText(titulo + ": " + descricao)
+                .setPriority(NotificationManager.IMPORTANCE_DEFAULT)
+                .setAutoCancel(true);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        notificationManager.notify(1, builder.build());
+    }
+
 }

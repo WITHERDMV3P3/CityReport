@@ -38,14 +38,14 @@ public class BancodadosDAO {
             if (cursor != null && cursor.moveToFirst()) {
                 do {
                     Problema problema = new Problema(
-                            cursor.getInt(0),    // id
-                            cursor.getString(1), // categoria
-                            cursor.getString(2), // descricao
-                            cursor.getString(3), // data_hora
-                            cursor.getString(4), // status
-                            cursor.getDouble(5), // latitude
-                            cursor.getDouble(6), // longitude
-                            cursor.getInt(7) == 1 // tem_foto
+                            cursor.getInt(0),
+                            cursor.getString(1),
+                            cursor.getString(2),
+                            cursor.getString(3),
+                            cursor.getString(4),
+                            cursor.getDouble(5),
+                            cursor.getDouble(6),
+                            cursor.getInt(7) == 1
                     );
                     problemas.add(problema);
                 } while (cursor.moveToNext());
@@ -99,7 +99,6 @@ public class BancodadosDAO {
         }
     }
 
-    // Outros métodos existentes...
     public List<String> carregarCategorias() {
         List<String> categorias = new ArrayList<>();
         try(SQLiteDatabase db = new BancodeDados(context).getReadableDatabase()) {
@@ -171,4 +170,47 @@ public class BancodadosDAO {
         cursor.close();
         return -1;
     }
+
+    public boolean atualizarStatusProblema(int problemaId, String novoStatus) {
+        SQLiteDatabase db = new BancodeDados(context).getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("status", novoStatus);
+
+        int linhasAfetadas = db.update("problemas", values, "id = ?", new String[]{String.valueOf(problemaId)});
+        db.close();
+        return linhasAfetadas > 0;
+    }
+
+    public List<Problema> buscarProblemasPorUsuarioMapa(int usuarioId) {
+        List<Problema> problemas = new ArrayList<>();
+        SQLiteDatabase db = null;
+        Cursor cursor = null;
+
+        try {
+            db = new BancodeDados(context).getReadableDatabase();
+
+            String query = "SELECT p.id, p.latitude, p.longitude FROM problemas p WHERE p.usuario_id = ?";
+
+            cursor = db.rawQuery(query, new String[]{String.valueOf(usuarioId)});
+
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    int id = cursor.getInt(0);
+                    double latitude = cursor.getDouble(1);
+                    double longitude = cursor.getDouble(2);
+
+                    Problema problema = new Problema(id, "", "", "", "", latitude, longitude, false);
+                    problemas.add(problema);
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e("BancodadosDAO", "Erro ao buscar problemas no mapa: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+            if (db != null) db.close();
+        }
+        return problemas;
+    }
+
+
 }

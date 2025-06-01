@@ -1,8 +1,13 @@
     package com.example.cityreport;
 
     import android.Manifest;
+    import android.app.NotificationChannel;
+    import android.app.NotificationManager;
     import android.content.Intent;
     import android.content.pm.PackageManager;
+    import android.media.AudioAttributes;
+    import android.media.RingtoneManager;
+    import android.os.Build;
     import android.os.Bundle;
     import android.view.View;
     import android.widget.Button;
@@ -36,6 +41,8 @@
             super.onCreate(savedInstanceState);
             EdgeToEdge.enable(this);
             setContentView(R.layout.pg_login);
+
+            criarCanalDeNotificacao();
 
             new BancodeDados(getApplicationContext()).getReadableDatabase();
 
@@ -105,4 +112,29 @@
                 }
             }
         }
+
+        private void criarCanalDeNotificacao() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                String channelId = "city_report";
+                CharSequence nome = "CityReport";
+                String descricao = "Notificações do aplicativo CityReport";
+                int importancia = NotificationManager.IMPORTANCE_DEFAULT;
+
+                NotificationChannel canal = new NotificationChannel(channelId, nome, importancia);
+                canal.setDescription(descricao);
+                canal.enableVibration(true);
+                canal.setVibrationPattern(new long[]{100, 200, 300});
+                canal.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
+                        new AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                .build());
+
+                NotificationManager notificationManager = getSystemService(NotificationManager.class);
+                if (notificationManager != null) {
+                    notificationManager.createNotificationChannel(canal);
+                }
+            }
+        }
+
     }
