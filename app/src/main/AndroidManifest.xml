@@ -41,6 +41,9 @@
             android:name=".PaginaReporte.PaginaCadastro"
             android:exported="false" />
         <activity
+            android:name=".EditarProblema.EditarProblema"
+            android:label="Editar Problema" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
 
