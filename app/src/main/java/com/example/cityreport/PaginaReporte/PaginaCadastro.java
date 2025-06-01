@@ -141,6 +141,9 @@ public class PaginaCadastro extends AppCompatActivity implements OnMapReadyCallb
                         // Insere no banco
                         bancodadosDAO.inserirProblema(categoriaId, usuarioId, descricao, imagemBytes, latitude, longitude, dataHoraAtual, status);
                         Toast.makeText(this, "Problema reportado com sucesso!", Toast.LENGTH_SHORT).show();
+                        finish();
+                        Intent intent = new Intent(PaginaCadastro.this, PaginaInicial.class);
+                        startActivity(intent);
                     } else {
                         Toast.makeText(this, "Não foi possível obter localização.", Toast.LENGTH_SHORT).show();
                     }
@@ -154,22 +157,19 @@ public class PaginaCadastro extends AppCompatActivity implements OnMapReadyCallb
 
     private byte[] convertImageToByteArray(Uri imageUri) {
         try {
-            Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+            Bitmap original = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+
+            // Redimensionar imagem para largura máx de 1024px (mantendo proporção)
+            Bitmap scaled = Bitmap.createScaledBitmap(original, 1024, (original.getHeight() * 1024) / original.getWidth(), true);
+
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+            scaled.compress(Bitmap.CompressFormat.JPEG, 80, stream); // qualidade 80%
             return stream.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
     }
-
-    private Location getCurrentLocationFromMap() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-        }
-        return fusedLocationClient.getLastLocation().getResult();
-    }
-
 
     private void loadCategories() {
         List<String> categories = bancodadosDAO.carregarCategorias();
