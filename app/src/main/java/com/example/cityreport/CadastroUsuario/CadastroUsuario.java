@@ -60,18 +60,18 @@ public class CadastroUsuario extends AppCompatActivity {
 
                 dao.inserirDadosUsuario(dados);
                 Toast.makeText(CadastroUsuario.this, "Usuário cadastrado com sucesso!", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(CadastroUsuario.this, MainActivity.class);
+                    startActivity(intent);
+                    finish();
             }
         });
 
 
 
-        login.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(CadastroUsuario.this, MainActivity.class);
-                startActivity(intent);
-                finish();
-            }
+        login.setOnClickListener(v -> {
+            Intent intent = new Intent(CadastroUsuario.this, MainActivity.class);
+            startActivity(intent);
+            finish();
         });
 
 
