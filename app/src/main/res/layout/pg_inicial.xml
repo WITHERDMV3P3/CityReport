@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
     android:orientation="vertical"
     android:padding="24dp"
     tools:ignore="ExtraText">
@@ -21,18 +19,38 @@
 
     <ListView
         android:id="@+id/listViewProblemas"
-        android:layout_width="wrap_content"
-        android:layout_height="573dp"
+        android:layout_width="match_parent"
+        android:layout_height="581dp"
         android:divider="@android:color/darker_gray"
         android:dividerHeight="1dp" />
+
 
     <Button
         android:id="@+id/btnCadastrarProblema"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:layout_marginBottom="16dp"
         android:backgroundTint="#0022FF"
         android:text="Cadastrar Problema"
         android:textColor="@color/white" />
+
+    <Button
+        android:id="@+id/btnnotificações"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="#0022FF"
+        android:text="Configurar Notificações"
+        android:textColor="@color/white" />
+
+    <Button
+        android:id="@+id/btnmapa"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="#0022FF"
+        android:text="Mapa dos Problemas"
+        android:textColor="@color/white" />
+
+
 </LinearLayout>

@@ -12,6 +12,7 @@
         android:name="android.hardware.camera"
         android:required="false" />
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -35,11 +36,17 @@
             android:name=".CadastroUsuario.CadastroUsuario"
             android:exported="false" />
         <activity
+            android:name=".Mapa.Mapa"
+            android:exported="false" />
+        <activity
             android:name=".PaginaInicial.PaginaInicial"
             android:exported="false" />
         <activity
             android:name=".PaginaReporte.PaginaCadastro"
             android:exported="false" />
+        <activity
+            android:name=".EditarProblema.EditarProblema"
+            android:label="Editar Problema" />
         <activity
             android:name=".MainActivity"
             android:exported="true">

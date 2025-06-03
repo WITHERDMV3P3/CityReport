@@ -4,8 +4,13 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
+
+import com.example.cityreport.PaginaInicial.problema.Problema;
+
 import java.util.ArrayList;
 import java.util.List;
+
 public class BancodadosDAO {
     final private Context context;
 
@@ -13,58 +18,85 @@ public class BancodadosDAO {
         this.context = context;
     }
 
-    public void inserirDadosUsuario(EncDados dados) {
-        try (SQLiteDatabase db = new BancodeDados(context).getWritableDatabase()) {
-            ContentValues values = new ContentValues();
-            values.put("nome", dados.getNome());
-            values.put("email", dados.getEmail());
-            values.put("senha", dados.getSenha());
-            db.insert("usuarios", null, values);
+    public List<Problema> buscarProblemasPorUsuario(int usuarioId) {
+        List<Problema> problemas = new ArrayList<>();
+        SQLiteDatabase db = null;
+        Cursor cursor = null;
+
+        try {
+            db = new BancodeDados(context).getReadableDatabase();
+
+            String query = "SELECT p.id, c.nome, p.descricao, p.data_hora, p.status, " +
+                    "p.latitude, p.longitude, p.foto IS NOT NULL as tem_foto " +
+                    "FROM problemas p " +
+                    "JOIN categorias c ON p.categoria_id = c.id " +
+                    "WHERE p.usuario_id = ? " +
+                    "ORDER BY p.data_hora DESC";
+
+            cursor = db.rawQuery(query, new String[]{String.valueOf(usuarioId)});
+
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    Problema problema = new Problema(
+                            cursor.getInt(0),
+                            cursor.getString(1),
+                            cursor.getString(2),
+                            cursor.getString(3),
+                            cursor.getString(4),
+                            cursor.getDouble(5),
+                            cursor.getDouble(6),
+                            cursor.getInt(7) == 1
+                    );
+                    problemas.add(problema);
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e("BancodadosDAO", "Erro ao buscar problemas: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+            if (db != null) db.close();
         }
-    }
-
-    public boolean verificarUsuario(String email, String senha) {
-        SQLiteDatabase db = new BancodeDados(context).getWritableDatabase();
-        String query = "SELECT * FROM usuarios WHERE email = ? AND senha = ?";
-        Cursor cursor = db.rawQuery(query, new String[]{email, senha});
-        boolean loginValido = cursor.getCount() > 0;
-        cursor.close();
-        db.close();
-        return loginValido;
-    }
-
-    public List<String> buscarProblemas(int usuarioId) {
-        List<String> problemas = new ArrayList<>();
-        SQLiteDatabase db = new BancodeDados(context).getReadableDatabase();
-
-        String query = "SELECT c.nome, p.descricao, p.data_hora, p.status " +
-                "FROM problemas p " +
-                "JOIN categorias c ON p.categoria_id = c.id " +
-                "WHERE p.usuario_id = ? " +
-                "ORDER BY p.data_hora DESC";
-
-        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(usuarioId)});
-
-        if (cursor.moveToFirst()) {
-            do {
-                String categoria = cursor.getString(0);
-                String descricao = cursor.getString(1);
-                String dataHora = cursor.getString(2);
-                String status = cursor.getString(3);
-
-                // Formata os dados em uma string única
-                String problemaFormatado = String.format(
-                        "Categoria: %s\nDescrição: %s\nData: %s\nStatus: %s",
-                        categoria, descricao, dataHora, status
-                );
-
-                problemas.add(problemaFormatado);
-            } while (cursor.moveToNext());
-        }
-
-        cursor.close();
-        db.close();
         return problemas;
+    }
+
+    public byte[] buscarFotoProblema(int problemaId) {
+        SQLiteDatabase db = new BancodeDados(context).getReadableDatabase();
+        byte[] foto = null;
+
+        String query = "SELECT foto FROM problemas WHERE id = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(problemaId)});
+
+        if (cursor.moveToFirst() && !cursor.isNull(0)) {
+            foto = cursor.getBlob(0);
+        }
+
+        cursor.close();
+        db.close();
+        return foto;
+    }
+
+    public boolean atualizarProblema(int problemaId, int categoriaId, String descricao, byte[] foto) {
+        SQLiteDatabase db = new BancodeDados(context).getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("categoria_id", categoriaId);
+        values.put("descricao", descricao);
+
+        if (foto != null) {
+            values.put("foto", foto);
+        }
+
+        try {
+            int rowsAffected = db.update(
+                    "problemas",
+                    values,
+                    "id = ?",
+                    new String[]{String.valueOf(problemaId)}
+            );
+            return rowsAffected > 0;
+        } finally {
+            db.close();
+        }
     }
 
     public List<String> carregarCategorias() {
@@ -74,11 +106,42 @@ public class BancodadosDAO {
             Cursor cursor = db.rawQuery(query, null);
             if (cursor.moveToFirst()) {
                 do {
-                    categorias.add(cursor.getString(0)); // Adiciona o nome da categoria à lista
+                    categorias.add(cursor.getString(0));
                 } while (cursor.moveToNext());
             }
         }
         return categorias;
+    }
+
+    public int buscarcategoriaID(String categoryName) {
+        int categoryId = -1;
+        SQLiteDatabase db = new BancodeDados(context).getReadableDatabase();
+        String query = "SELECT id FROM categorias WHERE nome = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{categoryName});
+        if (cursor.moveToFirst()) {
+            categoryId = cursor.getInt(0);
+        }
+        cursor.close();
+        return categoryId;
+    }
+
+    public boolean excluirProblema(int problemaId) {
+        SQLiteDatabase db = new BancodeDados(context).getWritableDatabase();
+        try {
+            int rowsAffected = db.delete("problemas", "id = ?", new String[]{String.valueOf(problemaId)});
+            return rowsAffected > 0;
+        } finally {
+            db.close();
+        }
+    }
+    public void inserirDadosUsuario(EncDados dados) {
+        try (SQLiteDatabase db = new BancodeDados(context).getWritableDatabase()) {
+            ContentValues values = new ContentValues();
+            values.put("nome", dados.getNome());
+            values.put("email", dados.getEmail());
+            values.put("senha", dados.getSenha());
+            db.insert("usuarios", null, values);
+        }
     }
 
     public void inserirProblema(int categoriaId, int usuarioId, String descricao, byte[] foto, double latitude, double longitude, String dataHora, String status) {
@@ -96,18 +159,6 @@ public class BancodadosDAO {
         }
     }
 
-    public int buscarcategoriaID(String categoryName) {
-        int categoryId = -1;
-        SQLiteDatabase db = new BancodeDados(context).getReadableDatabase();
-        String query = "SELECT id FROM categorias WHERE nome = ?";
-        Cursor cursor = db.rawQuery(query, new String[]{categoryName});
-        if (cursor.moveToFirst()) {
-            categoryId = cursor.getInt(0);
-        }
-        cursor.close();
-        return categoryId;
-    }
-
     public int obterIdUsuario(String email, String senha) {
         SQLiteDatabase db = new BancodeDados(context).getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT id FROM usuarios WHERE email = ? AND senha = ?", new String[]{email, senha});
@@ -119,5 +170,47 @@ public class BancodadosDAO {
         cursor.close();
         return -1;
     }
-}
 
+    public boolean atualizarStatusProblema(int problemaId, String novoStatus) {
+        SQLiteDatabase db = new BancodeDados(context).getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("status", novoStatus);
+
+        int linhasAfetadas = db.update("problemas", values, "id = ?", new String[]{String.valueOf(problemaId)});
+        db.close();
+        return linhasAfetadas > 0;
+    }
+
+    public List<Problema> buscarProblemasPorUsuarioMapa(int usuarioId) {
+        List<Problema> problemas = new ArrayList<>();
+        SQLiteDatabase db = null;
+        Cursor cursor = null;
+
+        try {
+            db = new BancodeDados(context).getReadableDatabase();
+
+            String query = "SELECT p.id, p.latitude, p.longitude FROM problemas p WHERE p.usuario_id = ?";
+
+            cursor = db.rawQuery(query, new String[]{String.valueOf(usuarioId)});
+
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    int id = cursor.getInt(0);
+                    double latitude = cursor.getDouble(1);
+                    double longitude = cursor.getDouble(2);
+
+                    Problema problema = new Problema(id, "", "", "", "", latitude, longitude, false);
+                    problemas.add(problema);
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e("BancodadosDAO", "Erro ao buscar problemas no mapa: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+            if (db != null) db.close();
+        }
+        return problemas;
+    }
+
+
+}
