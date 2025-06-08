@@ -116,8 +116,8 @@ public class PaginaCadastro extends AppCompatActivity implements OnMapReadyCallb
         String descricao = descricaoText.getText() != null ? descricaoText.getText().toString().trim() : "";
         String categoriaSelecionada = (String) spinnerCategorias.getSelectedItem();
 
-        if (photoURI == null) {
-            Toast.makeText(this, "Selecione ou tire uma foto.", Toast.LENGTH_SHORT).show();
+       if (photoURI == null) {
+            Toast.makeText(this, "Por favor tire uma foto.", Toast.LENGTH_SHORT).show();
             return;
         }
 
